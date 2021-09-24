@@ -1,7 +1,7 @@
 **************************************
 * File for: 
 * 1) overall % chronic asthma attributable to bronchiolitis
-* 2) IPW of MSMs – for categorical X
+* 2) IPW of MSMs – for chronic asthma (binary X)
 * begins with imputation
 *X: deprivation3
 *M: bronch
@@ -11,18 +11,17 @@
 *keep birthweight, gestation, firstborn to calculate SGA post imputation
 *also keep lbw, mat_age, socio_economic_group, intensive_flag, preterm_conditions, hospital_code
 **************************************
-use  		"$temp\CDMasthma_dataset.dta", clear
+use  		"$datasets\CDMasthma_dataset.dta", clear
 
 rename	 	deprivation3 x
 rename	 	bronch m
 generate 	y=0
 replace	 	y=1 if class==1 | class==2
-
-rename 	area_groups c1
+rename 		area_groups c1
 gen 		c2=0
-replace 		c2=1 if birthyear_child==2008
-rename 	mother_born_UK c3
-rename 	birth_season c4
+replace 	c2=1 if birthyear_child==2008
+rename 		mother_born_UK c3
+rename 		birth_season c4
 rename	 	sex c5
 rename  	mat_age_cat c6 // not in imputation model
 rename	 	preterm c7 // not in imputation model
@@ -82,8 +81,8 @@ replace imp_`var'=r(mean) if imp_`var'==.
 }
 
 *categorial var with missing values
-qui ta  		c13,m
-qui gen 		imp_c13_0=(c13==0)
+qui ta  	c13,m
+qui gen 	imp_c13_0=(c13==0)
 qui gen  	imp_c13_2=(c13==2)
 qui replace 	imp_c13_0=. if c13==.
 qui replace  	imp_c13_2=. if c13==.
@@ -165,14 +164,14 @@ qui replace 	imp_c13_0=runiform()<ec13_0 if c13==.
 qui replace 	imp_c13_2=0 if imp_c13_0==1
 qui replace 	imp_c13_2=runiform()>(1-ec13_2) if c13==.
 qui replace 	imp_c13=(imp_c13_0==1)*0+(imp_c13_0==0)*(imp_c13_2==0)*1 ///
-+ (imp_c13_2==1)*2 if c13==.
+		+ (imp_c13_2==1)*2 if c13==.
 qui tab		imp_c13
 qui drop	ec13*		
 }
 
 *keep orginal vars only
 qui foreach var of varlist iv2 iv3 iv4 iv8 c8 c11 c13 {
-replace	`var'=imp_`var' if `var'==.
+replace		`var'=imp_`var' if `var'==.
 }
 
 qui drop	imp_*
@@ -180,7 +179,7 @@ qui drop	imp_*
 ***create the new vars needed for analysis
 *preterm c7 from gestation iv3
 qui replace	c7=0 if iv3<37 & c7==.
-qui replace		c7=1 if iv3>=37 & c7==.
+qui replace	c7=1 if iv3>=37 & c7==.
 
 *mat age cats c6 from mat_age iv4
 qui replace	c6=0 if iv4<=19  & c6==.
@@ -200,7 +199,7 @@ qui generate	gestation=round(iv3)
 qui replace	gestation=24 if gestation==23
 qui replace	gestation=43 if gestation>43	
 qui generate	sex=c5	
-qui merge	m:m sex gestation using "$temp\SGA.dta"
+qui merge	m:m sex gestation using "$datasets\SGA.dta"
 qui replace	c10=0 if iv2>tenth_centile & c10==.
 qui replace	c10=0 if iv2<=tenth_centile & c10==.
 qui drop	_merge tenth_centile gestation firstborn sex
@@ -224,7 +223,7 @@ qui gen 		ipw1 = num_1/den_1 if x==1
 			qui replace ipw1 = num_2/den_2 if x==2
 			qui replace ipw1 = num_3/den_3 if x==3
 
-*model for asthma_binary (weighted) giving risk differences for TCE
+*model for asthma_binary (weighted) giving marginal risk differences
 qui binreg 		y i.x [pw=ipw],rd
 
 local 			tce_2=_b[2.x]
@@ -235,7 +234,7 @@ local 			tce_3=_b[3.x]
 scalar 			tce_3=`tce_3'
 return 			scalar tce_3=`tce_3'
 
-qui cap 			drop num* den*
+qui cap 		drop num* den*
 
 *Step 2. Model M 
 qui logit 		m, or
@@ -285,7 +284,6 @@ CDM_asthma 		y x m i.c1 c2 c3 i.c4 c5 i.c6 c7 c8 c9 c10 c11 i.c12 i.c13
 
 *Bootstrap
 bootstrap 		TCE_2=r(tce_2) TCE_3=r(tce_3) RISK_1=r(risk_1) ///
-CDM_2=r(cdm_2) CDM_3=r(cdm_3) ///
+			CDM_2=r(cdm_2) CDM_3=r(cdm_3) ///
 			PER_2=r(per_2) PER_3= r(per_3) /// 
 			, reps(1000) seed(1234): CDM_asthma
- 
