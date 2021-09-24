@@ -1,0 +1,41 @@
+Deriving asthma/wheeze trajectory groups (Mplus)
+! CODE FOR LCGA 4 CLASSES CUBIC MODEL
+! MANUAL 3 STEP APPROACH
+
+TITLE: Y on LCGA 4 CLASS ASTHMA/WHEEZE: AW2-AW9
+
+!AWx = asthma/wheeze at age x
+
+DATA: FILE IS “\file_name.dat”;
+	Format is free;
+
+VARIABLES: 
+NAMES = AW2-AW9 ID ;
+USEV = AW2-AW9;
+MISSING are all (-9999);
+IDVARIABLE = CHILDID;
+CLASSES = C(4)
+CATEGORICAL = AW2-AW9;
+
+ANALYSIS:
+	TYPE = MIXTURE;
+	ALGORITHM = INTEGRATION;
+	STARTS = 500 100;
+	STITERATIONS = 10;
+	PROCESS = 10(STARTS);
+
+MODEL:
+! This describes the model to be estimated
+! i s q cu are names for intercept, slope, quadratic and cubic terms, respectively
+
+	%overall%
+	i s q cu | aw2@0 aw3@1 aw4@2 aw5@3 aw6@4
+			aw7@5 aw8@6 aw9@7;
+i-cu @ 0;
+
+! Delete “@ 0” to allow within class variation (GMM model)
+! This allows for the additional terms needed for GMM models
+
+OUPUT: TECH1 TECH8 TECH11 TECH 14 CINTERVAL;
+
+! TECH1 produces starting values for all free parameters in the model
