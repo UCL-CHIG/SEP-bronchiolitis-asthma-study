@@ -1,0 +1,291 @@
+**************************************
+* File for: 
+* 1) overall % chronic asthma attributable to bronchiolitis
+* 2) IPW of MSMs – for categorical X
+* begins with imputation
+*X: deprivation3
+*M: bronch
+*Y: binary_asthma
+*M-Y counfounders: area_groups, birthyear_child, mother_born_UK
+*X-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_conditions, SGA, asthma_mother, siblings
+*keep birthweight, gestation, firstborn to calculate SGA post imputation
+*also keep lbw, mat_age, socio_economic_group, intensive_flag, preterm_conditions, hospital_code
+**************************************
+use  		"$temp\CDMasthma_dataset.dta", clear
+
+rename	 	deprivation3 x
+rename	 	bronch m
+generate 	y=0
+replace	 	y=1 if class==1 | class==2
+
+rename 	area_groups c1
+gen 		c2=0
+replace 		c2=1 if birthyear_child==2008
+rename 	mother_born_UK c3
+rename 	birth_season c4
+rename	 	sex c5
+rename  	mat_age_cat c6 // not in imputation model
+rename	 	preterm c7 // not in imputation model
+rename	 	smoke_preg c8
+rename	 	chronic_condition c9
+rename	 	SGA c10 // not in imputation model
+rename	 	asthma_mother c11
+rename	 	siblings_cat c12 // not in imputation model
+rename	 	delivery_method_3cat c13
+replace	 	c13=c13-1 //so categorised 0 1 2
+
+rename	 	preterm_conditions iv1 
+rename	 	birthweight iv2
+rename	 	gestation iv3
+rename	 	mat_age iv4
+rename	  	intensive_flag iv5
+rename	 	socio_economic_group iv6
+rename	 	hosp_G iv7
+rename   	siblings iv8
+			
+************************************************************************
+cap program drop CDM_asthma
+program define CDM_asthma, rclass	
+		
+************************************************************************
+*SINGLE IMPUTATION
+*for missing data
+
+*FOR iv2 = birthweight (to create SGA c10) regress
+*FOR iv3 = gestation (to create preterm c7) regress
+*FOR iv4 = mat_age (to create mat age cats c13) regress
+*FOR iv8 = siblings (to create categorical siblings c12 and SGA c10 too) mlogit
+*FOR c13 = delivery_method mlogit
+*FOR c8 = smoke_preg logit
+*FOR c11 = asthma_mother logit
+
+************************************************************************
+
+***generate imputation vars
+qui foreach var in x m y c1 c2 c3 c4 c5 c6 c7 ///
+c8 c9 c10 c11 c12 c13 ///
+iv1 iv2 iv3 iv4 iv5 iv6 iv7 iv8 {
+gen imp_`var'=`var'
+}
+
+***replace missingness in vars with average values
+*binary vars with missing values 
+qui foreach var in c8 c11 {
+summ `var'
+replace imp_`var'=runiform()<r(mean) if imp_`var'==.
+}
+
+*continuous vars with missing values 
+qui foreach var in iv2 iv3 iv4 iv8 {
+summ `var'
+replace imp_`var'=r(mean) if imp_`var'==.
+}
+
+*categorial var with missing values
+qui ta  		c13,m
+qui gen 		imp_c13_0=(c13==0)
+qui gen  	imp_c13_2=(c13==2)
+qui replace 	imp_c13_0=. if c13==.
+qui replace  	imp_c13_2=. if c13==.
+qui replace  	imp_c13_0=runiform()<0.05 if imp_c13_0==.
+qui replace  	imp_c13_2=0 if imp_c13_0==1
+qui replace  	imp_c13_2=runiform()>0.81 if imp_c13_2==.
+qui replace  	imp_c13=imp_c13_0+imp_c13_2*2 if imp_c13==.
+
+qui 		su imp_*
+
+*Need to do a lead in to imputation to stop convergence
+forvalues cycle=1(1)10 { 
+
+***impute binary vars first
+*for smoke_preg c8
+qui logit 	c8 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 ///
+imp_c5  imp_c9 imp_c11 i.imp_c13 ///
+		imp_iv1 imp_iv2 imp_iv3 imp_iv4 imp_iv5 imp_iv6 imp_iv7 imp_iv8
+		
+qui predict	ec8
+qui replace	imp_c8=runiform()<ec8 if c8==.
+qui tab		imp_c8
+qui drop	ec8 
+
+*for asthma_mother c11
+qui logit 	c11 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 imp_c5  ///
+		imp_c8 imp_c9 i.imp_c13 ///
+		imp_iv1 imp_iv2 imp_iv3 imp_iv4 imp_iv5 imp_iv6 imp_iv7 imp_iv8
+		
+qui predict	ec11
+qui replace	imp_c11=runiform()<ec11 if c11==.
+qui tab		imp_c11
+qui drop	ec11
+
+***impute continuous vars
+*for birthweight iv2
+qui regress 	iv2 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 imp_c5  ///
+		imp_c8 imp_c9 imp_c11 i.imp_c13 ///
+		imp_iv1 imp_iv3 imp_iv4 imp_iv5 imp_iv6 imp_iv7 imp_iv8
+		
+qui predict 	eiv2
+qui replace 	imp_iv2=eiv2+e(rmse)*rnormal() if iv2==.
+qui drop 	eiv2
+
+*for gestation iv3
+qui regress iv3 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 imp_c5  ///
+		imp_c8 imp_c9 imp_c11 i.imp_c13 ///
+		imp_iv1 imp_iv2 imp_iv4 imp_iv5 imp_iv6 imp_iv7 imp_iv8
+		
+qui predict 	eiv3
+qui replace 	imp_iv3=eiv3+e(rmse)*rnormal() if iv2==.
+qui drop 	eiv3
+
+*for mat_age iv4
+qui regress 	iv4 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 imp_c5  ///
+		imp_c8 imp_c9 imp_c11 i.imp_c13 ///
+		imp_iv1 imp_iv2 imp_iv3 imp_iv5 imp_iv6 imp_iv7 imp_iv8
+		
+qui predict 	eiv4
+qui replace 	imp_iv4=eiv4+e(rmse)*rnormal() if iv4==.
+qui drop 	eiv4
+
+*for siblings iv8
+qui regress 	iv8 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 imp_c5  ///
+		imp_c8 imp_c9 imp_c11 i.imp_c13 ///
+		imp_iv1 imp_iv2 imp_iv3 imp_iv4 imp_iv5 imp_iv6 imp_iv7
+		
+qui predict 	eiv8
+qui replace 	imp_iv8=eiv8+e(rmse)*rnormal() if iv8==.
+qui drop 	eiv8
+
+***impute categorical var 
+*for delivery_method c13
+qui mlogit 	c13 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 imp_c5  ///
+		imp_c8 imp_c9 imp_c11 ///
+		imp_iv1 imp_iv2 imp_iv3 imp_iv4 imp_iv5 imp_iv6 imp_iv7 imp_iv8
+qui predict 	ec13_0 ec13_1 ec13_2
+qui replace 	imp_c13_0=runiform()<ec13_0 if c13==.
+qui replace 	imp_c13_2=0 if imp_c13_0==1
+qui replace 	imp_c13_2=runiform()>(1-ec13_2) if c13==.
+qui replace 	imp_c13=(imp_c13_0==1)*0+(imp_c13_0==0)*(imp_c13_2==0)*1 ///
++ (imp_c13_2==1)*2 if c13==.
+qui tab		imp_c13
+qui drop	ec13*		
+}
+
+*keep orginal vars only
+qui foreach var of varlist iv2 iv3 iv4 iv8 c8 c11 c13 {
+replace	`var'=imp_`var' if `var'==.
+}
+
+qui drop	imp_*
+
+***create the new vars needed for analysis
+*preterm c7 from gestation iv3
+qui replace	c7=0 if iv3<37 & c7==.
+qui replace		c7=1 if iv3>=37 & c7==.
+
+*mat age cats c6 from mat_age iv4
+qui replace	c6=0 if iv4<=19  & c6==.
+qui replace	c6=1 if (iv4>19 & iv4<30) & c6==.
+qui replace	c6=2 if (iv4>29 & iv4<40) & c6==.
+qui replace	c6=3 if iv4>=40 & c6==.
+
+*categorical siblings c12 from siblings iv8
+qui replace	c12=0 if (round(iv8)==0 | iv8<0) & c12==.
+qui replace	c12=1 if round(iv8)==1 & c12==.
+qui replace	c12=2 if round(iv8)>1 & c12==.
+
+*SGA c10 from birthweight iv2 gestation iv3 and siblings c12
+qui generate 	firstborn=1 if c12==0
+qui replace 	firstborn=0 if c12==1 | c12==2	
+qui generate	gestation=round(iv3)
+qui replace	gestation=24 if gestation==23
+qui replace	gestation=43 if gestation>43	
+qui generate	sex=c5	
+qui merge	m:m sex gestation using "$temp\SGA.dta"
+qui replace	c10=0 if iv2>tenth_centile & c10==.
+qui replace	c10=0 if iv2<=tenth_centile & c10==.
+qui drop	_merge tenth_centile gestation firstborn sex
+				
+************************************************************************
+* CDM analysis
+************************************************************************
+cap			drop num*
+cap			drop den*
+cap			drop ipw*
+cap			drop X_M*
+
+*1. Model x
+qui mlogit 		x, base(1) rrr
+qui predict 		num_1 num_2 num_3
+
+qui mlogit 		x i.c1 c2 c3, base(1) rrr	
+qui predict 		den_1 den_2 den_3
+
+qui gen 		ipw1 = num_1/den_1 if x==1
+			qui replace ipw1 = num_2/den_2 if x==2
+			qui replace ipw1 = num_3/den_3 if x==3
+
+*model for asthma_binary (weighted) giving risk differences for TCE
+qui binreg 		y i.x [pw=ipw],rd
+
+local 			tce_2=_b[2.x]
+scalar 			tce_2=`tce_2'
+return 			scalar tce_2=`tce_2'
+
+local 			tce_3=_b[3.x]
+scalar 			tce_3=`tce_3'
+return 			scalar tce_3=`tce_3'
+
+qui cap 			drop num* den*
+
+*Step 2. Model M 
+qui logit 		m, or
+qui predict		num
+
+qui logit 		m i.x i.c1 c2 c3 i.c4 c5 i.c6 c7 c8 c9 c10 c11 i.c12 i.c13
+
+qui predict		den 
+
+qui gen 		ipw2 = cond(m, num/den, (1-num)/(1-den))		  
+
+qui cap 		drop num* den*
+qui cap 		drop ipw
+qui gen 		ipw=ipw1*ipw2
+
+*Step 3. model for Y (weighted) giving risk differences
+qui gen 		X_M_2=(x==2)*m
+qui gen 		X_M_3=(x==3)*m
+qui binreg 		y i.x X_M_2 X_M_3  [pw=ipw],rd
+
+*** Counterfactual Disparity Measures
+local 			cdm_2=_b[2.x]
+scalar 			cdm_2=`cdm_2'
+return 			scalar cdm_2=`cdm_2'
+
+local 			cdm_3=_b[3.x]
+scalar 			cdm_3=`cdm_3'
+return 			scalar cdm_3=`cdm_3'
+
+local 			risk_1=_b[_cons]
+scalar 			risk_1=`risk_1’
+return 			scalar risk_1=` risk_1'
+
+*** results %
+local 			per_2=(`tce_2'-`cdm_2')/`tce_2'*100
+scalar 			per_2=`per_2'
+return			scalar per_2=`per_2'
+
+local 			per_3=(`tce_3'-`cdm_3')/`tce_3'*100
+scalar 			per_3=`per_3'
+return 			scalar per_3=`per_3'
+
+end
+*******************************************************
+*check that it works:
+CDM_asthma 		y x m i.c1 c2 c3 i.c4 c5 i.c6 c7 c8 c9 c10 c11 i.c12 i.c13
+
+*Bootstrap
+bootstrap 		TCE_2=r(tce_2) TCE_3=r(tce_3) RISK_1=r(risk_1) ///
+CDM_2=r(cdm_2) CDM_3=r(cdm_3) ///
+			PER_2=r(per_2) PER_3= r(per_3) /// 
+			, reps(1000) seed(1234): CDM_asthma
+ 
