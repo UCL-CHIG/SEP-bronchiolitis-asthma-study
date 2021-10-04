@@ -6,8 +6,8 @@
 *X: deprivation3
 *M: bronch
 *Y: binary_asthma
-*M-Y counfounders: area_groups, birthyear_child, mother_born_UK
-*X-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_conditions, SGA, asthma_mother, siblings
+*X-Y counfounders: area_groups, birthyear_child, mother_born_UK
+*M-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_conditions, SGA, asthma_mother, siblings
 *keep birthweight, gestation, firstborn to calculate SGA post imputation
 *also keep lbw, mat_age, socio_economic_group, intensive_flag, preterm_conditions, hospital_code
 **************************************
@@ -99,7 +99,7 @@ forvalues cycle=1(1)10 {
 ***impute binary vars first
 *for smoke_preg c8
 qui logit 	c8 i.imp_x imp_m imp_y i.imp_c1 imp_c3 i.imp_c4 ///
-imp_c5  imp_c9 imp_c11 i.imp_c13 ///
+		imp_c5  imp_c9 imp_c11 i.imp_c13 ///
 		imp_iv1 imp_iv2 imp_iv3 imp_iv4 imp_iv5 imp_iv6 imp_iv7 imp_iv8
 		
 qui predict	ec8
