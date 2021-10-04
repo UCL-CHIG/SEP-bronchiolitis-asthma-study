@@ -226,13 +226,13 @@ qui gen 		ipw1 = num_1/den_1 if x==1
 *model for asthma_binary (weighted) giving marginal risk differences
 qui binreg 		y i.x [pw=ipw],rd
 
-local 			tce_2=_b[2.x]
-scalar 			tce_2=`tce_2'
-return 			scalar tce_2=`tce_2'
+local 			mrd_2=_b[2.x]
+scalar 			mrd_2=`mrd_2'
+return 			scalar mrd_2=`mrd_2'
 
-local 			tce_3=_b[3.x]
-scalar 			tce_3=`tce_3'
-return 			scalar tce_3=`tce_3'
+local 			mrd_3=_b[3.x]
+scalar 			mrd_3=`mrd_3'
+return 			scalar mrd_3=`mrd_3'
 
 qui cap 		drop num* den*
 
@@ -269,11 +269,11 @@ scalar 			risk_1=`risk_1’
 return 			scalar risk_1=` risk_1'
 
 *** results %
-local 			per_2=(`tce_2'-`cdm_2')/`tce_2'*100
+local 			per_2=(`mrd_2'-`cdm_2')/`mrd_2'*100
 scalar 			per_2=`per_2'
 return			scalar per_2=`per_2'
 
-local 			per_3=(`tce_3'-`cdm_3')/`tce_3'*100
+local 			per_3=(`mrd_3'-`cdm_3')/`mrd_3'*100
 scalar 			per_3=`per_3'
 return 			scalar per_3=`per_3'
 
@@ -283,7 +283,7 @@ end
 CDM_asthma 		y x m i.c1 c2 c3 i.c4 c5 i.c6 c7 c8 c9 c10 c11 i.c12 i.c13
 
 *Bootstrap
-bootstrap 		TCE_2=r(tce_2) TCE_3=r(tce_3) RISK_1=r(risk_1) ///
+bootstrap 		MRD_2=r(mrd_2) MRD_3=r(mrd_3) RISK_1=r(risk_1) ///
 			CDM_2=r(cdm_2) CDM_3=r(cdm_3) ///
 			PER_2=r(per_2) PER_3= r(per_3) /// 
 			, reps(1000) seed(1234): CDM_asthma
