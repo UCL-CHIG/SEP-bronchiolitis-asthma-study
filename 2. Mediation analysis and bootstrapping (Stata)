@@ -1,16 +1,20 @@
 **************************************
+
 * File for: 
 * 1) overall % chronic asthma attributable to bronchiolitis
-* 2) IPW of MSMs – for chronic asthma
-* begins with imputation
-*X: Socioeconomic deprivation grouos (deprivation3)
+* 2) IPW of MSMs for chronic asthma - method derived from Naimi et al. (2016) doi: 10.1093/aje/kwv329 
+* begins with imputation - code derived from Micali et al. (2018) doi: 10.1097/EDE.0000000000000850
+
+*X: Socioeconomic deprivation groups (deprivation3)
 *M: Hospital admission for bronchiolitis (bronch)
 *Y: Chronic asthma (class 1 and class 2 from LCGA)
 *X-Y counfounders: area_groups, birthyear_child, mother_born_UK
 *M-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_conditions, SGA, asthma_mother, siblings
 *keep birthweight, gestation, firstborn to calculate SGA post imputation
 *also keep lbw, mat_age, socio_economic_group, intensive_flag, preterm_conditions, hospital_code
+
 **************************************
+
 use  		"$datasets\CDMasthma_dataset.dta", clear
 
 rename	 	deprivation3 x
