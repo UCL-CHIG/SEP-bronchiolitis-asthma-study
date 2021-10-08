@@ -3,7 +3,7 @@ We sought to estimate the magnitude of socioeconomic disparity in childhood asth
 1. Mplus code to implement latent class growth analysis (LCGA), which was used to model asthma/wheeze trajectory groups<br/>
 2. Stata code to implement mediation analyses and bootstrapping
 # Data sources
-This work uses Scotland-wide administrative data, provided by citizens and collected by the National Records of Scotland and NHS Scotland. This includes the following datasets:<br/>
+This work uses Scotland-wide administrative data, provided by citizens and collected by the National Records of Scotland and NHS Scotland. This includes the following linked datasets:<br/>
 - National Records of Scotland (NRS) birth and death registrations (https://www.nrscotland.gov.uk/)<br/>
 - The Scottish Birth Record (https://www.ndc.scot.nhs.uk/Data-Dictionary/SMR-Datasets/Scottish-Birth-Record/)<br/>
 - Scottish Morbidity Records, SMR01 (https://www.ndc.scot.nhs.uk/Data-Dictionary/SMR-Datasets/SMR01-General-Acute-Inpatient-and-Day-Case/) and SMR02 (https://www.ndc.scot.nhs.uk/Data-Dictionary/SMR-Datasets/SMR02-Maternity-Inpatient-and-Day-Case/)<br/>
@@ -13,5 +13,6 @@ The use of linked administrative health data from Scotland was approved by the P
 # Code authors
 Bianca De Stavola<br/>
 Kate Lewis - [Github](https://github.com/LewisKate123) [Twitter](https://twitter.com/KateMarieLewis1)<br/>
+Pia Hardelid<br/>
 # Acknowledgements 
 KML was funded by a Medical Research Council UK doctoral training studentship (MR/N013867/1).
