@@ -1,11 +1,11 @@
 **************************************
 * File for: 
 * 1) overall % chronic asthma attributable to bronchiolitis
-* 2) IPW of MSMs – for chronic asthma (binary X)
+* 2) IPW of MSMs – for chronic asthma
 * begins with imputation
-*X: deprivation3
-*M: bronch
-*Y: binary_asthma
+*X: Socioeconomic deprivation grouos (deprivation3)
+*M: Hospital admission for bronchiolitis (bronch)
+*Y: Chronic asthma (class 1 and class 2 from LCGA)
 *X-Y counfounders: area_groups, birthyear_child, mother_born_UK
 *M-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_conditions, SGA, asthma_mother, siblings
 *keep birthweight, gestation, firstborn to calculate SGA post imputation
