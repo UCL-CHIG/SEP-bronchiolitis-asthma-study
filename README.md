@@ -13,6 +13,6 @@ The use of linked administrative health data from Scotland was approved by the P
 # Code authors
 Bianca De Stavola<br/>
 Kate Lewis - [Github](https://github.com/LewisKate123) [Twitter](https://twitter.com/KateMarieLewis1)<br/>
-Pia Hardelid<br/>
+Pia Hardelid - [Github](https://github.com/kanelbulle778)<br/>
 # Acknowledgements 
 KML was funded by a Medical Research Council UK doctoral training studentship (MR/N013867/1).
