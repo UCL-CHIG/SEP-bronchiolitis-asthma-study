@@ -49,11 +49,10 @@ rename   	siblings iv8
 ************************************************************************
 cap program drop CDM_asthma
 program define CDM_asthma, rclass	
-		
-************************************************************************
-*SINGLE IMPUTATION
-*for missing data
 
+************************************************************************
+* SINGLE IMPUTATION for missing data
+************************************************************************
 *FOR iv2 = birthweight (to create SGA c10) regress
 *FOR iv3 = gestation (to create preterm c7) regress
 *FOR iv4 = mat_age (to create mat age cats c13) regress
@@ -61,8 +60,6 @@ program define CDM_asthma, rclass
 *FOR c13 = delivery_method mlogit
 *FOR c8 = smoke_preg logit
 *FOR c11 = asthma_mother logit
-
-************************************************************************
 
 ***generate imputation vars
 qui foreach var in x m y c1 c2 c3 c4 c5 c6 c7 ///
@@ -209,7 +206,7 @@ qui replace	c10=0 if iv2<=tenth_centile & c10==.
 qui drop	_merge tenth_centile gestation firstborn sex
 				
 ************************************************************************
-* CDM analysis
+* Counterfactual disparity measures (CDM) analysis
 ************************************************************************
 cap			drop num*
 cap			drop den*
@@ -259,7 +256,7 @@ qui gen 		X_M_2=(x==2)*m
 qui gen 		X_M_3=(x==3)*m
 qui binreg 		y i.x X_M_2 X_M_3  [pw=ipw],rd
 
-*** Counterfactual Disparity Measures
+*** CDM
 local 			cdm_2=_b[2.x]
 scalar 			cdm_2=`cdm_2'
 return 			scalar cdm_2=`cdm_2'
@@ -282,7 +279,9 @@ scalar 			per_3=`per_3'
 return 			scalar per_3=`per_3'
 
 end
-*******************************************************
+************************************************************************
+* Bootstrapping
+************************************************************************
 *check that it works:
 CDM_asthma 		y x m i.c1 c2 c3 i.c4 c5 i.c6 c7 c8 c9 c10 c11 i.c12 i.c13
 
