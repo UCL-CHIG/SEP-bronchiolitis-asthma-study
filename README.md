@@ -11,8 +11,8 @@ This work uses Scotland-wide administrative data, provided by citizens and colle
 # Data access
 The use of linked administrative health data from Scotland was approved by the Public Benefit and Privacy Panel, reference 1617-0224, and the South East Scotland Research Ethics Committee 02, reference 18/SS/0117. Authors do not have permission to share patient-level data. Data are available from Public Health Scotland (phs.edris@phs.scot) for researchers who meet the criteria for access to confidential data.<br/>
 # Code authors
-Bianca De Stavola<br/>
-Kate Lewis - [Github](https://github.com/LewisKate123) [Twitter](https://twitter.com/KateMarieLewis1)<br/>
+Bianca L De Stavola<br/>
+Kate M Lewis - [Github](https://github.com/LewisKate123) [Twitter](https://twitter.com/KateMarieLewis1)<br/>
 Pia Hardelid - [Github](https://github.com/kanelbulle778)<br/>
 # Acknowledgements 
 KML was funded by a Medical Research Council UK doctoral training studentship (MR/N013867/1).
