@@ -2,8 +2,8 @@
 
 * File for: 
 * 1) overall % chronic asthma attributable to bronchiolitis
-* 2) IPW of MSMs for chronic asthma - method derived from Naimi et al. (2016) doi: 10.1093/aje/kwv329 
-* begins with imputation - code derived from Micali et al. (2018) doi: 10.1097/EDE.0000000000000850
+* 2) begins with imputation - code derived from Micali et al. (2018) doi: 10.1097/EDE.0000000000000850
+* 3) Inverse probability weighting (IPW) of marginal structural models for chronic asthma - method derived from Naimi et al. (2016) doi: 10.1093/aje/kwv329 
 
 *X: Socioeconomic deprivation groups (deprivation3)
 *M: Hospital admission for bronchiolitis (bronch)
@@ -207,6 +207,7 @@ qui drop	_merge tenth_centile gestation firstborn sex
 				
 ************************************************************************
 * Counterfactual disparity measures (CDM) analysis
+* Using IPW of marginal structural models
 ************************************************************************
 cap			drop num*
 cap			drop den*
