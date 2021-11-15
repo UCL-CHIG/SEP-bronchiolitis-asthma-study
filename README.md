@@ -1,6 +1,6 @@
 # SEP-bronchiolitis-asthma-study
 We sought to estimate the magnitude of socioeconomic disparity in childhood asthma that would remain if no child were admitted to hospital for bronchiolitis during infancy. This repository contains three scripts:<br/>
-1. Stata code to define asthma/wheeze at ages 2 to 9 years (for use in step 2)
+1. Stata code to define asthma/wheeze at ages 2 to 9 years (for use in script 2)
 2. Mplus code to implement latent class growth analysis (LCGA), which was used to model asthma/wheeze trajectory groups<br/>
 3. Stata code to implement mediation analyses and bootstrapping
 # Data sources
