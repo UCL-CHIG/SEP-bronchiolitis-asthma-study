@@ -1,4 +1,4 @@
-Deriving asthma/wheeze trajectory groups (Mplus)
+! Deriving asthma/wheeze trajectory groups (Mplus)
 ! CODE FOR LCGA 4 CLASSES CUBIC MODEL
 ! DERIVED FROM Mplus User's Guide (Muthén & Muthén, 1998-2017)
 ! SEE CHAPTER 8: Mixture Modeling with Longitudinal Data (https://www.statmodel.com/download/usersguide/Chapter8.pdf)
