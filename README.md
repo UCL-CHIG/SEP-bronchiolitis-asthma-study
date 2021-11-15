@@ -16,4 +16,5 @@ Bianca L De Stavola<br/>
 Kate M Lewis - [Github](https://github.com/LewisKate123) [Twitter](https://twitter.com/KateMarieLewis1)<br/>
 Pia Hardelid - [Github](https://github.com/kanelbulle778)<br/>
 # Acknowledgements 
-KML was funded by a Medical Research Council UK doctoral training studentship (MR/N013867/1).
+KML was funded by a Medical Research Council UK doctoral training studentship (MR/N013867/1).<br/>
+We thank Prof Steve Cunningham for expert input into this work.
