@@ -1,7 +1,8 @@
 # SEP-bronchiolitis-asthma-study
-We sought to estimate the magnitude of socioeconomic disparity in childhood asthma that would remain if no child were admitted to hospital for bronchiolitis during infancy. This repository contains two scripts:<br/>
-1. Mplus code to implement latent class growth analysis (LCGA), which was used to model asthma/wheeze trajectory groups<br/>
-2. Stata code to implement mediation analyses and bootstrapping
+We sought to estimate the magnitude of socioeconomic disparity in childhood asthma that would remain if no child were admitted to hospital for bronchiolitis during infancy. This repository contains three scripts:<br/>
+1. Stata code to define asthma/wheeze at ages 2 to 9 years (for use in step 2)
+2. Mplus code to implement latent class growth analysis (LCGA), which was used to model asthma/wheeze trajectory groups<br/>
+3. Stata code to implement mediation analyses and bootstrapping
 # Data sources
 This work uses Scotland-wide administrative data, provided by citizens and collected by the National Records of Scotland and NHS Scotland. This includes the following linked datasets:<br/>
 - National Records of Scotland (NRS) birth and death registrations (https://www.nrscotland.gov.uk/)<br/>
