@@ -1,0 +1,254 @@
+***************************************************************************
+* File for: defining symptoms of asthma/wheeze 
+* Uses prescription, hospital admission and mortality data
+* Also British National Formulary for Children (BNFc)
+****************************************************************************
+
+****************************************************************************
+* Bring in the raw PIS data and keep information relating to:
+* BNFc chapter 3 
+* BNFc chapter 6
+****************************************************************************
+use       "$datasets\PISchild_dataset.dta", clear
+destring	presccouncilareacode dispcouncilareacode patcouncilareacode ///
+			    simd* carstairs* pidailydoseconversion dispensedquantity, replace
+
+*format dates
+foreach   var of varlist dispdate prescdate paiddate {
+tostring	`var', replace
+gen 		  tmpyr=substr(`var',1,4)
+gen 		  tmpmt=substr(`var',5,2)
+gen 		  tmpdy=substr(`var',7,2)
+destring 	tmpyr tmpdy tmpmt, replace
+gen 		  PIS_`var' = mdy(tmpmt, tmpdy, tmpyr)
+format 		PIS_`var' %d
+drop 		  tmpyr tmpmt tmpdy `var'
+}
+		
+*drop vars with no extra info
+drop		contraceptiveindicator  
+drop		piprescribableitemtype 
+
+*save full files by PIBNFChapterCode to make smaller files
+preserve
+keep		if pibnfchaptercode==3
+save		"$new_files\PIS_child_ch3_respiratory.dta", replace
+restore
+
+preserve
+keep		if pibnfchaptercode==6
+save		"$new_files\PIS_child_ch6_endocrine.dta", replace
+restore
+
+
+  
+  
+*****************************************
+*										*
+*		Asthma medication - child		*
+*										*
+*****************************************
+
+*** read in PIS files
+
+**asthma drugs only
+use 		  "$raw_files\PIS_child_ch3_respiratory.dta", clear 
+append 		using "$raw_files\PIS_child_ch6_endocrine.dta"
+drop 		  if age_presc>10
+
+**drop vars where information is not needed
+drop		  pibnfitemdescription /*info included in other fields*/
+drop		  paidquantity /*also have disp and presc quant fields*/
+drop		  pdsubserviceflag pdserviceflag /*pharmacy prescription contract*/
+drop		  patgend* cars* liableto
+
+*** PRESCRIBER info
+** presclocationtype and presctype same for CP, Den, Hosp; create new var
+gen			  prescriber=.
+replace		prescriber=1 if prescribertype=="GP"
+replace		prescriber=2 if prescribertype=="NUR"
+replace		prescriber=3 if prescribertype=="PHM"
+replace		prescriber=4 if prescribertype=="CP"
+replace		prescriber=5 if prescribertype=="HOSP"
+replace		prescriber=6 if prescribertype=="DEN"
+label 		define prescriber 1 "GPRAC-GP" 2 "GPRAC-NUR" 3 "GPRAC-PHM" ///
+			  4 "CPCON-CP" 5 "HOSPWARD-HOSP" 6 "DENPRAC-DEN"
+label		values prescriber prescriber 
+drop		presclocationtype prescribertype
+
+*** AREA INFO 
+*label health board code
+encode		preschealthboardninedigitcode, gen(presc_healthboard)
+encode		disphealthboardninedigitcode , gen(disp_healthboard)
+encode		pathealthboardofresidenceninedig, gen(pat_healthboard)
+replace		pat_healthboard=pat_healthboard-1
+label 		define healthboard 1 "NHS Ayrshire and Arran" 2 "NHS Borders" ///
+		  	  3 "NHS Dumfries and Halloway" 4 "NHS Fife" 5 "NHS Firth Valley" ///
+			    6 "NHS Grampian" 7 "NHS Greater Glasgow and Clyde" ///
+          8 "NHS Highland" 9 "NHS Lanarkshire" 10 "NHS Lothian" ///
+			    11 "NHS Orkney" 12 "NHS Shetland" 13 "NHS Tayside" ///
+			    14 "NHS Western Isles" 15 "UK - other" 16 "No fixed abode", replace
+replace		pat_healthboard=. if	pat_healthboard==17
+label 		values presc_healthboard healthboard
+label 		values disp_healthboard healthboard
+label 		values pat_healthboard healthboard
+replace		pat_healthboard=. if pat_healthboard==0 
+drop		  *ninedig*
+
+*label displocationtype 
+gen 		  disp_location=.
+replace 	disp_location=1 if displocationtype=="CP"
+replace 	disp_location=2 if displocationtype=="DD"
+label 		define disp_location 1 "Community pharmacy" 2 "Doctor dispensed" 
+label		  values disp_location disp_location
+drop		  displocationtype 
+
+*simd - keep relevant years (2009 and 2012)
+drop		  simd2004* simd2006* 
+rename		simd2009v2_sc_decile simd09_decile
+rename		simd2012_sc_decile simd12_decile
+
+*** DATES and age
+**no dates should be before 2008
+foreach 	var of varlist PIS_prescdate PIS_dispdate PIS_paiddate{
+replace		`var'=. if year(`var')<2008
+           } 
+			
+*errors: -1, 100, 101,102 recoded to missing
+foreach 	var of varlist age_paid_date age_presc_date age_disp_date{
+			   replace `var'=. if `var'<=-1 | `var'>=100
+			    } 
+
+**DROP duplicates
+* firstly drop all other unnecesary vars
+keep		  childid PIS_prescdate PIS_dispdate pibnfitemcode pibnfchaptercode ///
+			    piapprovedname age_presc_date piitemstrengthuom pidrugformulation
+duplicates 	drop 
+			
+** PRESCRIPTION data: identify relevant medicine
+*One or more prescriptions  
+gen			  bronchodilator=1 if bnfchaptersection_code=="3.1"
+gen			  corticosteroid=1 if bnfchaptersection_code=="3.2"
+gen			  cromoglicate=1 if bnfchaptersection_code=="3.3" 
+gen			  glucocorticoid=1 if bnfchaptersection_code=="6.3.2" 
+
+*exclusions
+replace		bronchodilator=0 if piapprovedname=="FORMOTEROL FUMARATE" & age_presc<6 
+replace		bronchodilator=0 if piapprovedname=="ACLIDINIUM BROMIDE AND FORMOTEROL FUMARATE" & age_presc<6 
+replace		bronchodilator=0 if piapprovedname=="EPHEDRINE HYDROCHLORIDE" 
+replace		bronchodilator=0 if piapprovedname=="GLYCOPYRRONIUM BROMIDE"
+replace		bronchodilator=0 if piapprovedname=="TIOTROPIUM" 
+replace		bronchodilator=0 if piapprovedname=="UMECLIDINIUM BROMIDE" 
+replace		bronchodilator=0 if piapprovedname=="FLUTICASONE FUROATE WITH UMECLIDINIUM BROMIDE AND VILANTEROL TRIFENATATE"
+replace		corticosteroid=0 if piapprovedname=="FLUTICASONE FUROATE AND VILANTEROL"
+replace		corticosteroid=0 if piapprovedname=="BUDESONIDE" & age_presc<6 
+replace		corticosteroid=0 if piapprovedname=="CICLESONIDE" & age_presc<12 
+replace		corticosteroid=0 if piapprovedname=="FLUTICASONE PROPIONATE" & age_presc<4 
+replace		corticosteroid=0 if piapprovedname=="FLUTICASONE PROPIONATE AND FORMOTEROL FUMARATE" & age_presc<6 
+replace		corticosteroid=0 if piapprovedname=="BUDESONIDE WITH FORMOTEROL FUMARATE" & age_presc<6 
+replace		corticosteroid=0 if piapprovedname=="BECLOMETASONE DIPROPIONATE AND FORMOTEROL FUMARATEE" & age_presc<6 
+replace		corticosteroid=0 if piapprovedname=="BECLOMETASONE DIPROPIONATE" & age_presc<2
+replace		cromoglicate=0 if piapprovedname=="ZAFIRLUKAST"
+replace		cromoglicate=0 if piapprovedname=="NEDOCROMIL SODIUM" & age_presc<5 
+replace		cromoglicate=0 if piapprovedname=="SODIUM CROMOGLICATE" & age_presc<5
+replace		cromoglicate=0 if piapprovedname=="OMALIZUMAB" & age_presc<5
+replace		glucocorticoid=0 if piapprovedname=="BETAMETHASONE" | ///
+			    piapprovedname=="DEFLAZACORT" | piapprovedname=="METHYLPREDNISOLONE" 	
+			
+gen			  combo_adm=1 if piapprovedname=="PREDNISOLONE"
+
+* drop rows with no medication fitting definition 
+drop if 	bronchodilator!=1 & corticosteroid!=1 & cromoglicate!=1 ///
+			    & glucocorticoid!=1
+
+*count how many prescriptions within a year of age: ANY drug
+foreach 	var of varlist bronchodilator corticosteroid cromoglicate ///
+			    glucocorticoid{
+bysort     childid age_presc: egen sum_`var'=sum(`var')
+}
+
+gen			sum_anypresc=sum_bronchodilator+sum_corticosteroid+ ///
+			  sum_cromoglicate+sum_glucocorticoid
+
+*count number of final that need combo with admission
+bysort		childid age_presc: egen combo_admN=sum(combo_adm)
+
+*keeping 4 or more presc only
+drop		  if sum_anypresc<4
+gen			  age=age_presc
+drop		  PIS_prescdate bronchodilator corticosteroid cromoglicate ///
+			    glucocorticoid combo_adm 
+save		  "$temp\PIS_asthma.dta", replace
+
+
+bysort		childid age: keep if _n==1		
+merge		  1:1 childid age using "$temp\admissions_AW_short.dta"
+keep		  childid sum_anypresc combo_admN age AW_main
+gen			  any_indicator=1 if AW_main==1 | (sum_anypresc>=4 & sum_anypresc!=.)
+drop		  if age==0 | age==1
+drop		  if age>10
+save		"$output\PIS_asthma4_AWadmission.dta", replace
+
+*WIDE format
+drop		if any_indicator==.
+drop		if sum_anypresc-combo_admN<4 & AW_main!=1
+drop		sum_anypresc combo_admN AW_main
+reshape		wide any_indicator,i(childid) j(age)
+save		"$temp\anyasthmawheeze_WIDE.dta", replace
+
+*PUT IT ALL TOGETHER TO DEFINE ASTHMA*
+
+*set outcome to missing for those who die or emigrate before end of followup
+*first set missing to no asthma/wheeze
+drop 		any_indicator10
+rename		any_indicator* AW*
+forvalues k = 2(1)9{
+replace		AW`k'=0 if AW`k'==.
+} 
+
+forvalues k = 3(1)9{
+local a = `k'-1
+local b = `k'+1
+replace		AW`k'=. if AW`a'==.
+replace		AW`k'=. if age_death_years==`b' | ///
+			age_emigration_years==`b'
+}
+
+*tab AW by age
+forvalues k = 2(1)9{
+tab			AW`k',m
+}
+
+*actual follow-up
+generate	follow_up=10*365.25
+replace		follow_up=death_date-dob if death_date!=.
+replace		follow_up=date_emigration_child-dob if date_emigration_child!=.
+replace		follow_up=follow_up/365.25
+mean 		follow_up
+total		follow_up
+drop		follow_up
+
+*follow-up in study design
+generate	follow_up=10
+forvalues k = 2(1)9{
+replace		follow_up=`k' if AW`k'==. & follow_up==10
+} 
+mean 		follow_up
+total		follow_up
+drop		follow_up
+
+*set into Mplus shape: step one of traj modelling
+preserve
+keep 		AW2-AW9 childid
+bysort		childid: gen ID=_n
+drop childid
+save		"$output\formplus.dta", replace
+stata2mplus using "$output\formplus", replace
+restore
+
+gen			max_aw=0
+
+forvalues k = 2(1)9{
+replace		max_aw=1 if AW`k'==1 
+}	
+	
