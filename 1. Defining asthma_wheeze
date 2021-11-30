@@ -1,6 +1,6 @@
 ***************************************************************************
 * File for: defining symptoms of asthma/wheeze 
-* Uses data from Prescribing Information System (PIS), National Records of Scotland (NRS) death registration and Scottish Morbidity Records (SMR01) 
+* Uses data from Prescribing Information System (PIS) and Scottish Morbidity Records (SMR01) 
 ****************************************************************************
 
 ****************************************************************************
@@ -180,31 +180,14 @@ drop		countn
 save		"$temp\admissions_asthma_wheeze.dta", replace
 
 *****************************************
-* Asthma related deaths
-*****************************************
-
-use		"$datasets\deaths_child.dta", clear
-gen		death_asthma_pri=0
-replace		death_asthma_pri=1 if substr(primary_cause_of_death,1,3)=="J45" | ///
-		substr(underlying_cause_of_death,1,3)=="J45"
-gen		death_asthma_sec=0
-foreach	var of varlist secondary_cause_of_death_0-secondary_cause_of_death_9 ///
-		cause_of_death_code_0-cause_of_death_code_9{
-		replace	death_asthma_sec=1 if substr(`var',1,3)=="J45"
-		}
-keep		if death_asthma_pri==1 | death_asthma_sec==1
-*keep date of death
-keep		childid death_asthma_pri death_asthma_sec age
-
-*****************************************
 * Create one final indicator of asthma/wheeze per age
 *****************************************	
 merge		1:1 childid age using "$temp\admissions_asthma.dta"
 drop		_merge
 merge		1:1 childid age using "$temp\PIS_asthma.dta"
-keep		childid sum_anypresc age AW_admission death_asthma
+keep		childid sum_anypresc age AW_admission
 
-gen		any_indicator=1 if AW_admission==1 | death_asthma_pri==1 | death_asthma_sec==1 ///
+gen		any_indicator=1 if AW_admission==1 | death_asthma_sec==1 ///
 		| (sum_anypresc>=4 & sum_anypresc!=.)
 drop		if age==0 | age==1
 drop		if age>10
