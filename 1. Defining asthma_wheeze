@@ -177,18 +177,15 @@ keep 		childid wheeze* asthma* year_adm length_of_stay age AW_admission
 bysort		childid  age: gen countn=_n /*first admission only*/
 drop		if countn>1
 drop		countn 
-save		"$temp\admissions_asthma_wheeze.dta", replace
 
 *****************************************
 * Create one final indicator of asthma/wheeze per age
 *****************************************	
-merge		1:1 childid age using "$temp\admissions_asthma.dta"
-drop		_merge
 merge		1:1 childid age using "$temp\PIS_asthma.dta"
 keep		childid sum_anypresc age AW_admission
 
-gen		any_indicator=1 if AW_admission==1 | death_asthma_sec==1 ///
-		| (sum_anypresc>=4 & sum_anypresc!=.)
+gen		any_indicator=1 if AW_admission==1 | ///
+		(sum_anypresc>=4 & sum_anypresc!=.)
 drop		if age==0 | age==1
 drop		if age>10
 
@@ -199,7 +196,8 @@ drop		sum_anypresc combo_admN AW_main
 reshape		wide any_indicator,i(childid) j(age)
 save		"$temp\anyasthmawheeze_WIDE.dta", replace
 
-*set outcome to missing for those who die or emigrate before end of followup
+*set outcome to missing for those who die or emigrate before end of follow-up
+*this information is derived from XXX
 *first set missing to no asthma/wheeze
 drop 		any_indicator10
 rename		any_indicator* AW*
