@@ -9,9 +9,9 @@
 *M: Hospital admission for bronchiolitis (bronch)
 *Y: Chronic asthma (class 1 and class 2 from LCGA)
 *X-Y counfounders: area_groups, birthyear_child, mother_born_UK
-*M-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_conditions, SGA, asthma_mother, siblings
-*keep birthweight, gestation, firstborn to calculate SGA post imputation
-*also keep lbw, mat_age, socio_economic_group, intensive_flag, preterm_conditions, hospital_code
+*M-Y confounders: area_groups, birthyear_child, mother_born_UK, birth_season, sex, mat_age_cat, preterm, smoke_preg, chronic_condition, SGA, asthma_mother, siblings, delivery_method_3cat
+*use birthweight, gestation, firstborn (derived from siblings) to calculate SGA post imputation
+*also keep lbw, mat_age, socio_economic_group, intensive_flag, preterm_conditions, high_missingness_indicator
 
 **************************************
 
@@ -43,7 +43,7 @@ rename	 	gestation iv3
 rename	 	mat_age iv4
 rename	  	intensive_flag iv5
 rename	 	socio_economic_group iv6
-rename	 	hosp_G iv7
+rename	 	high_missingness_indicator iv7
 rename   	siblings iv8
 			
 ************************************************************************
